@@ -76,7 +76,12 @@
     "totalPasswords": "Total Passwords",
     "websites": "Websites",
     "settings": "Settings",
-    "logout": "Logout"
+    "logout": "Logout",
+    "reorderPlatforms": "Reorder Platforms",
+    "saveOrder": "Save Order",
+    "moveUp": "Up",
+    "moveDown": "Down",
+    "resetOrder": "Reset"
   },
   "password": {
     "websiteName": "Website Name",

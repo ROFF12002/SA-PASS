@@ -76,7 +76,12 @@
     "totalPasswords": "إجمالي كلمات المرور",
     "websites": "المواقع",
     "settings": "الإعدادات",
-    "logout": "خروج"
+    "logout": "خروج",
+    "reorderPlatforms": "ترتيب المنصات",
+    "saveOrder": "حفظ الترتيب",
+    "moveUp": "أعلى",
+    "moveDown": "أسفل",
+    "resetOrder": "إعادة الضبط"
   },
   "password": {
     "websiteName": "اسم الموقع",

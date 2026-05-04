@@ -2,6 +2,8 @@ import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { SpaceFolder, SpaceLink } from '../types';
 import { useI18n } from '../lib/i18n';
 
+import { supabase } from '../lib/supabaseClient';
+
 const INITIAL_FOLDERS: SpaceFolder[] = [
   { id: '1', name: 'Social Media', icon: '📱', color: 'bg-pink-100', isWorkspace: false },
   { id: '2', name: 'AI Tools', icon: '🤖', color: 'bg-emerald-100', isWorkspace: true },
@@ -15,18 +17,22 @@ const INITIAL_LINKS: SpaceLink[] = [
   { id: 'l2', folderId: '2', name: 'ChatGPT', url: 'https://chat.openai.com', iconUrl: 'https://www.google.com/s2/favicons?domain=chat.openai.com&sz=128', domainColor: '#10A37F', createdAt: new Date().toISOString() },
 ];
 
-export default function MySpaces() {
+export default function MySpaces({ user, isOnline }: { user?: { id: string; email: string }, isOnline?: boolean }) {
   const { t } = useI18n();
+  // Using user specific keys to prevent leaks across accounts locally
+  const foldersKey = `sampass_folders_${user?.id || 'guest'}`;
+  const linksKey = `sampass_links_${user?.id || 'guest'}`;
+
   const [folders, setFolders] = useState<SpaceFolder[]>(() => {
     try {
-      const saved = localStorage.getItem('sampass_folders');
+      const saved = localStorage.getItem(foldersKey);
       return saved ? JSON.parse(saved) : INITIAL_FOLDERS;
     } catch { return INITIAL_FOLDERS }
   });
   
   const [links, setLinks] = useState<SpaceLink[]>(() => {
     try {
-      const saved = localStorage.getItem('sampass_links');
+      const saved = localStorage.getItem(linksKey);
       return saved ? JSON.parse(saved) : INITIAL_LINKS;
     } catch { return INITIAL_LINKS; }
   });
@@ -40,13 +46,50 @@ export default function MySpaces() {
   const [activeFolderId, setActiveFolderId] = useState<string>('all');
   const fileInputRef = useRef<HTMLInputElement>(null);
   
+  // Database Sync using dedicated tables
   useEffect(() => {
-    localStorage.setItem('sampass_folders', JSON.stringify(folders));
-  }, [folders]);
+    if (!user || !isOnline) return;
+    
+    const fetchSpaces = async () => {
+      try {
+        const [foldersRes, linksRes] = await Promise.all([
+          supabase.from('space_folders').select('*').eq('user_id', user.id).order('created_at', { ascending: true }),
+          supabase.from('space_links').select('*').eq('user_id', user.id).order('created_at', { ascending: true })
+        ]);
+          
+        if (foldersRes.data && foldersRes.data.length > 0) {
+          const parsedFolders = foldersRes.data.map(f => ({
+            id: f.id, name: f.name, icon: f.icon, color: f.color, isWorkspace: f.is_workspace
+          }));
+          setFolders(parsedFolders);
+        }
+        if (linksRes.data && linksRes.data.length > 0) {
+          const parsedLinks = linksRes.data.map(l => ({
+            id: l.id, folderId: l.folder_id, name: l.name, url: l.url,
+            iconUrl: l.icon_url, domainColor: l.domain_color || '#4F46E5', createdAt: l.created_at
+          }));
+          setLinks(parsedLinks);
+        }
+      } catch (e) {
+        // ignore
+      }
+    };
+    fetchSpaces();
+  }, [user, isOnline]);
+  
+  // Update local storage when state changes
+  useEffect(() => {
+    localStorage.setItem(foldersKey, JSON.stringify(folders));
+  }, [folders, foldersKey]);
 
   useEffect(() => {
-    localStorage.setItem('sampass_links', JSON.stringify(links));
-  }, [links]);
+    localStorage.setItem(linksKey, JSON.stringify(links));
+  }, [links, linksKey]);
+  
+  // Actually sync to Supabase when changed
+  useEffect(() => {
+    // We will handle syncing on save/delete directly now
+  }, []);
 
   const handlePaste = async () => {
     try {
@@ -67,7 +110,7 @@ export default function MySpaces() {
     }
   };
 
-  const handleSave = (e: React.FormEvent) => {
+  const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!linkUrl || !linkName) return;
 
@@ -82,16 +125,29 @@ export default function MySpaces() {
     const domain = new URL(finalUrl).hostname;
     
     if (editingLinkId) {
-      setLinks(links.map(l => l.id === editingLinkId ? {
-        ...l,
+      const updatedLink = {
         name: linkName,
         url: finalUrl,
         folderId: folderIdToUse,
-        iconUrl: customIcon || l.iconUrl || `https://www.google.com/s2/favicons?domain=${domain}&sz=128`,
-      } : l));
+        iconUrl: customIcon || `https://www.google.com/s2/favicons?domain=${domain}&sz=128`,
+      };
+      
+      setLinks(links.map(l => l.id === editingLinkId ? { ...l, ...updatedLink } : l));
+      
+      if (user && isOnline) {
+         try {
+           await supabase.from('space_links').update({
+             name: updatedLink.name,
+             url: updatedLink.url,
+             folder_id: updatedLink.folderId,
+             icon_url: updatedLink.iconUrl
+           }).eq('id', editingLinkId).eq('user_id', user.id);
+         } catch(e) {}
+      }
     } else {
+      const newId = crypto.randomUUID();
       const newLink: SpaceLink = {
-        id: crypto.randomUUID(),
+        id: newId,
         folderId: folderIdToUse,
         name: linkName,
         url: finalUrl,
@@ -100,6 +156,20 @@ export default function MySpaces() {
         createdAt: new Date().toISOString(),
       };
       setLinks([...links, newLink]);
+      
+      if (user && isOnline) {
+         try {
+           await supabase.from('space_links').insert({
+             id: newId,
+             user_id: user.id,
+             folder_id: folderIdToUse,
+             name: linkName,
+             url: finalUrl,
+             icon_url: newLink.iconUrl,
+             domain_color: newLink.domainColor
+           });
+         } catch(e) {}
+      }
     }
 
     setShowAddModal(false);
@@ -130,9 +200,14 @@ export default function MySpaces() {
     setShowAddModal(true);
   };
 
-  const handleDeleteLink = (id: string) => {
+  const handleDeleteLink = async (id: string) => {
     setLinks(links.filter(l => l.id !== id));
     setShowAddModal(false);
+    if (user && isOnline) {
+      try {
+        await supabase.from('space_links').delete().eq('id', id).eq('user_id', user.id);
+      } catch(e) {}
+    }
   };
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -162,6 +237,8 @@ export default function MySpaces() {
 
       let currentFolders = [...folders];
       const newLinks: SpaceLink[] = [];
+      const dbFoldersToInsert: any[] = [];
+      const dbLinksToInsert: any[] = [];
 
       const dls = doc.querySelectorAll('DL');
       
@@ -179,14 +256,25 @@ export default function MySpaces() {
         // Find or create folder
         let folder = currentFolders.find(f => f.name.toLowerCase() === folderName.toLowerCase());
         if (!folder) {
+          const newFolderId = crypto.randomUUID();
           folder = {
-            id: crypto.randomUUID(),
+            id: newFolderId,
             name: folderName,
             icon: '📁',
             color: 'bg-slate-100',
             isWorkspace: false
           };
           currentFolders.push(folder);
+          if (user) {
+             dbFoldersToInsert.push({
+               id: newFolderId,
+               user_id: user.id,
+               name: folderName,
+               icon: '📁',
+               color: 'bg-slate-100',
+               is_workspace: false
+             });
+          }
         }
 
         const linksInDl = dl.querySelectorAll(':scope > p > dt > a, :scope > dt > a');
@@ -197,15 +285,28 @@ export default function MySpaces() {
           if (href && href.startsWith('http')) {
             try {
               const domain = new URL(href).hostname;
+              const newLinkId = crypto.randomUUID();
+              const linkUrl = iconStr || `https://www.google.com/s2/favicons?domain=${domain}&sz=128`;
               newLinks.push({
-                id: crypto.randomUUID(),
-                folderId: folder.id,
+                id: newLinkId,
+                folderId: folder!.id,
                 name: title,
                 url: href,
-                iconUrl: iconStr || `https://www.google.com/s2/favicons?domain=${domain}&sz=128`,
+                iconUrl: linkUrl,
                 domainColor: '#4F46E5', // Fallback color
                 createdAt: new Date().toISOString(),
               });
+              if (user) {
+                 dbLinksToInsert.push({
+                   id: newLinkId,
+                   user_id: user.id,
+                   folder_id: folder!.id,
+                   name: title,
+                   url: href,
+                   icon_url: linkUrl,
+                   domain_color: '#4F46E5'
+                 });
+              }
             } catch {
               // ignore invalid url
             }
@@ -215,6 +316,12 @@ export default function MySpaces() {
 
       setFolders(currentFolders);
       setLinks([...links, ...newLinks]);
+      
+      // Async insert
+      if (user && isOnline) {
+        if (dbFoldersToInsert.length > 0) supabase.from('space_folders').insert(dbFoldersToInsert).then();
+        if (dbLinksToInsert.length > 0) supabase.from('space_links').insert(dbLinksToInsert).then();
+      }
     };
     reader.readAsText(file);
     if (e.target) e.target.value = '';
@@ -244,9 +351,10 @@ export default function MySpaces() {
   };
 
   return (
-    <div className="animate-fadeIn pb-12 w-full">
-      {/* Categories */}
-      <div className="flex gap-3 overflow-x-auto pb-4 scrollbar-hide py-2 mb-2">
+    <>
+      <div className="animate-fadeIn pb-12 w-full">
+        {/* Categories */}
+        <div className="flex gap-3 overflow-x-auto pb-4 scrollbar-hide py-2 mb-2">
         <button 
           onClick={() => setActiveFolderId('all')}
           className={`shrink-0 flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all duration-300 ${
@@ -326,7 +434,7 @@ export default function MySpaces() {
         {filteredLinks.map((link, i) => {
           const safeUrl = btoa(link.url).replace(/=/g, '');
           return (
-            <button
+            <div
               key={link.id}
               onClick={() => openLink(link.url)}
               className="group relative flex flex-col items-center justify-center p-4 bg-white dark:bg-slate-800/80 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-700/50 hover:shadow-xl hover:shadow-indigo-500/10 dark:hover:shadow-indigo-500/5 hover:-translate-y-1 transition-all duration-300 cursor-pointer overflow-hidden min-h-[130px]"
@@ -356,13 +464,14 @@ export default function MySpaces() {
                   <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" /></svg>
                 </button>
               </div>
-            </button>
+            </div>
           )
         })}
       </div>
+      </div>
 
         {showAddModal && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 animate-fadeIn">
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 animate-fadeIn" style={{ position: 'fixed' }}>
             {/* Backdrop */}
             <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setShowAddModal(false)} />
             
@@ -488,6 +597,6 @@ export default function MySpaces() {
             </div>
           </div>
         )}
-    </div>
+    </>
   );
 }

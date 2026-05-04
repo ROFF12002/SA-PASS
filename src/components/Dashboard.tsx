@@ -78,6 +78,16 @@ export default function Dashboard({ user, encryptionKey, isOnline, onOpenSetting
   const [quickAddPlatform, setQuickAddPlatform] = useState<{ name: string; url: string; category: string } | null>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [copiedUsernameId, setCopiedUsernameId] = useState<string | null>(null);
+
+  const [platformOrder, setPlatformOrder] = useState<string[]>(() => {
+    try {
+      return JSON.parse(localStorage.getItem('sampass_platform_order') || '[]');
+    } catch {
+      return [];
+    }
+  });
+  const [showReorderModal, setShowReorderModal] = useState(false);
+  const [tempOrder, setTempOrder] = useState<string[]>([]);
   const [categoriesLayout, setCategoriesLayout] = useState<'horizontal' | 'vertical'>(() => {
     return (localStorage.getItem('sampass_categories_layout') as 'horizontal' | 'vertical') || 'horizontal';
   });
@@ -472,6 +482,7 @@ export default function Dashboard({ user, encryptionKey, isOnline, onOpenSetting
   // ─── Filter & Group ────────────────────────
   const filtered = useMemo(() => {
     return passwords.filter((p) => {
+      if (p.websiteName === '__SAMPASS_SPACES__') return false;
       const q = searchQuery.toLowerCase();
       const matchesSearch =
         !q ||
@@ -498,8 +509,63 @@ export default function Dashboard({ user, encryptionKey, isOnline, onOpenSetting
       if (!map.has(key)) map.set(key, []);
       map.get(key)!.push(p);
     }
-    return Array.from(map.entries()).sort((a, b) => a[0].localeCompare(b[0], language === 'ar' ? 'ar' : 'en'));
-  }, [filtered, language]);
+    return Array.from(map.entries()).sort((a, b) => {
+      const aIdx = platformOrder.indexOf(a[0]);
+      const bIdx = platformOrder.indexOf(b[0]);
+
+      if (aIdx !== -1 && bIdx !== -1) return aIdx - bIdx;
+      if (aIdx !== -1) return -1;
+      if (bIdx !== -1) return 1;
+
+      return a[0].localeCompare(b[0], language === 'ar' ? 'ar' : 'en');
+    });
+  }, [filtered, language, platformOrder]);
+
+  // ─── Platform Ordering Logic ─────────────────
+  const openReorderModal = () => {
+    const uniquePlatforms = Array.from(new Set(passwords.map(p => p.websiteName)));
+    
+    // Create an ordered list matching current state + any new platforms alphabetically
+    const newOrder = [...platformOrder];
+    
+    uniquePlatforms.forEach(p => {
+      if (!newOrder.includes(p)) {
+        newOrder.push(p);
+      }
+    });
+
+    // Remove old platforms that don't exist anymore
+    const cleanOrder = newOrder.filter(p => uniquePlatforms.includes(p));
+
+    setTempOrder(cleanOrder);
+    setShowReorderModal(true);
+  };
+
+  const moveOrderUp = (index: number) => {
+    if (index === 0) return;
+    const newArr = [...tempOrder];
+    [newArr[index - 1], newArr[index]] = [newArr[index], newArr[index - 1]];
+    setTempOrder(newArr);
+  };
+
+  const moveOrderDown = (index: number) => {
+    if (index === tempOrder.length - 1) return;
+    const newArr = [...tempOrder];
+    [newArr[index + 1], newArr[index]] = [newArr[index], newArr[index + 1]];
+    setTempOrder(newArr);
+  };
+
+  const savePlatformOrder = () => {
+    setPlatformOrder(tempOrder);
+    localStorage.setItem('sampass_platform_order', JSON.stringify(tempOrder));
+    setShowReorderModal(false);
+  };
+  
+  const resetPlatformOrder = () => {
+    setPlatformOrder([]);
+    localStorage.removeItem('sampass_platform_order');
+    setShowReorderModal(false);
+  };
 
   // ─── Render ────────────────────────────────
   return (
@@ -586,6 +652,15 @@ export default function Dashboard({ user, encryptionKey, isOnline, onOpenSetting
 
             {/* Action buttons */}
             <button
+              onClick={openReorderModal}
+              className="p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-slate-200 dark:hover:bg-slate-700 transition-all hidden sm:flex"
+              title={t('dashboard.reorderPlatforms')}
+            >
+              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M3 7.5L7.5 3m0 0L12 7.5M7.5 3v13.5m13.5 0L16.5 21m0 0L12 16.5m4.5 4.5V7.5" />
+              </svg>
+            </button>
+            <button
               onClick={onOpenSettings}
               className="p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-slate-200 dark:hover:bg-slate-700 transition-all"
               title={t('dashboard.settings')}
@@ -636,7 +711,7 @@ export default function Dashboard({ user, encryptionKey, isOnline, onOpenSetting
       <main className="max-w-6xl w-full mx-auto px-4 py-6">
 
         {activeMainTab === 'spaces' ? (
-          <MySpaces />
+          <MySpaces user={user} isOnline={isOnline} />
         ) : (
           <div className="animate-fadeIn animate-slideUp">
             {/* Reassurance Banner — Entry stagger 2 */}
@@ -904,6 +979,84 @@ export default function Dashboard({ user, encryptionKey, isOnline, onOpenSetting
                   {t('general.delete')}
                 </button>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Reorder Modal */}
+      {showReorderModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 animate-fadeIn">
+          <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setShowReorderModal(false)} />
+          <div className="relative w-full max-w-md bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 flex flex-col max-h-[85vh] animate-scaleIn">
+            <div className="flex items-center justify-between p-5 border-b border-slate-100 dark:border-slate-800">
+              <h3 className="text-lg font-bold text-slate-900 dark:text-white">
+                {t('dashboard.reorderPlatforms')}
+              </h3>
+              <button
+                onClick={() => setShowReorderModal(false)}
+                className="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-all"
+              >
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            
+            <div className="flex-1 overflow-y-auto p-3 space-y-2">
+              {tempOrder.length === 0 ? (
+                <div className="text-center py-10 text-slate-500 text-sm">
+                  {t('dashboard.noPasswords')}
+                </div>
+              ) : (
+                tempOrder.map((platform, index) => (
+                  <div key={platform} className="flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-100 dark:border-slate-700/50">
+                    <div className="flex items-center gap-3 truncate">
+                      <div className={`w-8 h-8 rounded-lg bg-gradient-to-br ${getAvatarGradient(platform)} flex items-center justify-center text-white font-bold text-xs shadow-sm shrink-0`}>
+                        {platform.charAt(0).toUpperCase()}
+                      </div>
+                      <span className="font-semibold text-slate-700 dark:text-slate-200 truncate">{platform}</span>
+                    </div>
+                    <div className="flex items-center gap-1 shrink-0">
+                      <button
+                        onClick={() => moveOrderUp(index)}
+                        disabled={index === 0}
+                        className="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-500/10 rounded-md disabled:opacity-30 disabled:hover:bg-transparent transition-all"
+                        title={t('dashboard.moveUp')}
+                      >
+                        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 15.75l7.5-7.5 7.5 7.5" />
+                        </svg>
+                      </button>
+                      <button
+                        onClick={() => moveOrderDown(index)}
+                        disabled={index === tempOrder.length - 1}
+                        className="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-500/10 rounded-md disabled:opacity-30 disabled:hover:bg-transparent transition-all"
+                        title={t('dashboard.moveDown')}
+                      >
+                        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
+                        </svg>
+                      </button>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+
+            <div className="p-5 border-t border-slate-100 dark:border-slate-800 flex gap-3 bg-slate-50/50 dark:bg-slate-900/50 rounded-b-3xl">
+               <button
+                onClick={resetPlatformOrder}
+                className="px-4 py-2.5 bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-medium rounded-xl hover:bg-slate-300 dark:hover:bg-slate-700 transition-all text-sm"
+              >
+                {t('dashboard.resetOrder')}
+              </button>
+              <button
+                onClick={savePlatformOrder}
+                className="flex-1 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl transition-all shadow-lg shadow-indigo-500/25 text-sm"
+              >
+                {t('dashboard.saveOrder')}
+              </button>
             </div>
           </div>
         </div>
