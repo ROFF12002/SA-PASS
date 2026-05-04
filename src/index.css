@@ -1,0 +1,275 @@
+@import "tailwindcss";
+
+/* ─── Class-based Dark Mode ─────────────────── */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* ═══════════════════════════════════════════════
+   SAMPASS Motion Language
+   ─────────────────────────────────────────────
+   Rule: Every animation must REASSURE, CLARIFY, or DELIGHT
+
+   3 speeds:
+     • Entry    = 0.5s  (welcome, no rush)
+     • Interact = 0.3s  (responsive, confident)
+     • Feedback = 0.35s (visible, brief)
+
+   1 curve:
+     cubic-bezier(0.16, 1, 0.3, 1) — smooth deceleration
+
+   ❌ NO bounce  ❌ NO jitter  ❌ NO fast moves
+   ═══════════════════════════════════════════════ */
+
+/* ─── 1️⃣ ENTRANCE ──────────────────────────── */
+/* Feeling: "The app welcomes you calmly" */
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes scaleIn {
+  from { opacity: 0; transform: scale(0.94); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slideDown {
+  from { opacity: 0; transform: translateY(-14px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ─── 2️⃣ INTERACTION ──────────────────────── */
+/* Feeling: "I am alive and responsive" */
+
+@keyframes expandReveal {
+  from { opacity: 0; transform: translateY(-4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes cardNew {
+  0%   { opacity: 0; transform: scale(0.92) translateY(8px); }
+  100% { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+@keyframes checkPop {
+  0%   { transform: scale(0); opacity: 0; }
+  50%  { transform: scale(1.25); opacity: 1; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+@keyframes gentleFloat {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-3px); }
+}
+
+@keyframes gradientShift {
+  0%   { background-position: 0% 50%; }
+  50%  { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+@keyframes fabPulse {
+  0%   { box-shadow: 0 8px 30px rgba(99,102,241,0.3); }
+  50%  { box-shadow: 0 10px 45px rgba(99,102,241,0.45); }
+  100% { box-shadow: 0 8px 30px rgba(99,102,241,0.3); }
+}
+
+/* ─── 3️⃣ FEEDBACK ─────────────────────────── */
+/* Feeling: "Something happened — here's proof" */
+
+@keyframes blurReveal {
+  from { filter: blur(8px); opacity: 0.4; }
+  to   { filter: blur(0);   opacity: 1; }
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  20%      { transform: translateX(-4px); }
+  40%      { transform: translateX(4px); }
+  60%      { transform: translateX(-2px); }
+  80%      { transform: translateX(2px); }
+}
+
+@keyframes lockOverlay {
+  from { opacity: 0; backdrop-filter: blur(0); }
+  to   { opacity: 1; backdrop-filter: blur(8px); }
+}
+
+/* ─── Animation Classes ────────────────────── */
+
+/* Entry — 0.5s smooth deceleration */
+.animate-fadeIn     { animation: fadeIn     0.5s cubic-bezier(0.16, 1, 0.3, 1) both; }
+.animate-scaleIn   { animation: scaleIn   0.45s cubic-bezier(0.16, 1, 0.3, 1) both; }
+.animate-slideUp   { animation: slideUp   0.45s cubic-bezier(0.16, 1, 0.3, 1) both; }
+.animate-slideDown { animation: slideDown  0.4s cubic-bezier(0.16, 1, 0.3, 1) both; }
+
+/* Interaction — 0.3s confident */
+.animate-check-pop     { animation: checkPop     0.3s cubic-bezier(0.34, 1.56, 0.64, 1) both; }
+.animate-card-new      { animation: cardNew      0.45s cubic-bezier(0.16, 1, 0.3, 1) both; }
+.animate-expand-reveal { animation: expandReveal 0.35s cubic-bezier(0.16, 1, 0.3, 1) both; }
+.animate-float         { animation: gentleFloat  3.5s ease-in-out infinite; }
+.animate-fab-glow      { animation: fabPulse     2.5s ease-in-out 1; }
+.animate-gradient-bg   { background-size: 200% 200%; animation: gradientShift 8s ease infinite; }
+
+/* Feedback — 0.35s visible */
+.animate-blur-reveal { animation: blurReveal 0.35s ease-out both; }
+.animate-shake       { animation: shake      0.4s ease-in-out; }
+.animate-slide-in    { animation: cardNew    0.45s cubic-bezier(0.16, 1, 0.3, 1) both; }
+
+/* ─── Staggered Entry System ──────────────── */
+/* Header → Banner → Categories → Cards → FAB */
+.stagger-1 { animation-delay: 0ms; }
+.stagger-2 { animation-delay: 70ms; }
+.stagger-3 { animation-delay: 140ms; }
+.stagger-4 { animation-delay: 210ms; }
+.stagger-5 { animation-delay: 280ms; }
+
+/* ─── Hover System ────────────────────────── */
+/* Feeling: "I acknowledge your presence" */
+
+/* Platform card — slow luxurious lift */
+.hover-lift {
+  transition:
+    transform     0.35s cubic-bezier(0.16, 1, 0.3, 1),
+    box-shadow    0.35s ease,
+    border-color  0.35s ease;
+}
+.hover-lift:hover {
+  transform: translateY(-2px);
+  border-color: rgba(99, 102, 241, 0.25);
+  box-shadow: 0 8px 24px -4px rgba(99, 102, 241, 0.08), 0 2px 8px -2px rgba(0, 0, 0, 0.04);
+}
+.dark .hover-lift:hover {
+  box-shadow: 0 8px 24px -4px rgba(99, 102, 241, 0.12), 0 2px 8px -2px rgba(0, 0, 0, 0.2);
+  border-color: rgba(99, 102, 241, 0.2);
+}
+
+/* Account row — subtle background shift */
+.row-hover { transition: background-color 0.25s ease; }
+.row-hover:hover { background-color: rgba(99, 102, 241, 0.03); }
+.dark .row-hover:hover { background-color: rgba(99, 102, 241, 0.06); }
+
+/* Action buttons — gentle color shift */
+.action-btn {
+  transition: color 0.2s ease, background-color 0.2s ease, transform 0.15s ease;
+}
+.action-btn:active { transform: scale(0.88); }
+
+/* Inputs — border glow on focus */
+input, textarea, select {
+  transition: border-color 0.3s ease, box-shadow 0.3s ease, background-color 0.3s ease;
+}
+
+/* Toggle switch — smooth slide */
+.toggle-track { transition: background-color 0.3s ease; }
+.toggle-thumb { transition: inset-inline-start 0.3s cubic-bezier(0.16, 1, 0.3, 1); }
+
+/* ─── Password Security Visuals ────────────── */
+/* Feeling: "Your data is protected" */
+
+.password-dots {
+  letter-spacing: 3px;
+  color: #94a3b8;
+  font-size: 0.8rem;
+  transition: filter 0.4s ease;
+}
+
+.password-blur {
+  filter: blur(6px);
+  user-select: none;
+  transition: filter 0.4s ease, user-select 0s 0.4s;
+}
+.password-blur.revealed {
+  filter: blur(0);
+  user-select: auto;
+  transition: filter 0.4s ease, user-select 0s 0s;
+}
+
+/* ─── Expand/Collapse Smooth ───────────────── */
+/* Feeling: organized + in control */
+
+.chevron-rotate { transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1); }
+.chevron-rotate[data-open="true"] { transform: rotate(180deg); }
+
+/* ─── Platform Accent Colors ──────────────── */
+.accent-instagram { border-inline-start: 3px solid #E1306C; }
+.accent-facebook  { border-inline-start: 3px solid #1877F2; }
+.accent-twitter   { border-inline-start: 3px solid #1DA1F2; }
+.accent-gmail     { border-inline-start: 3px solid #EA4335; }
+.accent-github    { border-inline-start: 3px solid #6e5494; }
+.accent-linkedin  { border-inline-start: 3px solid #0A66C2; }
+.accent-tiktok    { border-inline-start: 3px solid #00f2ea; }
+.accent-whatsapp  { border-inline-start: 3px solid #25D366; }
+.accent-telegram  { border-inline-start: 3px solid #26A5E4; }
+.accent-discord   { border-inline-start: 3px solid #5865F2; }
+.accent-spotify   { border-inline-start: 3px solid #1DB954; }
+.accent-netflix   { border-inline-start: 3px solid #E50914; }
+.accent-youtube   { border-inline-start: 3px solid #FF0000; }
+.accent-amazon    { border-inline-start: 3px solid #FF9900; }
+.accent-paypal    { border-inline-start: 3px solid #003087; }
+.accent-snapchat  { border-inline-start: 3px solid #FFFC00; }
+.accent-pinterest { border-inline-start: 3px solid #E60023; }
+.accent-reddit    { border-inline-start: 3px solid #FF4500; }
+.accent-outlook   { border-inline-start: 3px solid #0078D4; }
+.accent-dropbox   { border-inline-start: 3px solid #0061FF; }
+.accent-slack     { border-inline-start: 3px solid #4A154B; }
+.accent-figma     { border-inline-start: 3px solid #F24E1E; }
+
+/* ─── Calm Mode ────────────────────────────── */
+.calm-mode .animate-fab-glow,
+.calm-mode .animate-gradient-bg,
+.calm-mode .animate-float,
+.calm-mode .hover-lift:hover { animation: none !important; transform: none !important; }
+.calm-mode .animate-slideUp,
+.calm-mode .animate-fadeIn,
+.calm-mode .animate-scaleIn,
+.calm-mode .animate-slide-in,
+.calm-mode .animate-expand-reveal,
+.calm-mode .animate-card-new { animation: none !important; opacity: 1; transform: none; }
+.calm-mode [class*="accent-"] { border-inline-start: none !important; }
+
+/* ─── Scrollbar ───────────────────────────── */
+.scrollbar-hide::-webkit-scrollbar { display: none; }
+.scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #475569; border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: #64748b; }
+
+/* ─── Global Styles ───────────────────────── */
+html {
+  scroll-behavior: smooth;
+  -webkit-tap-highlight-color: transparent;
+}
+
+body {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden;
+}
+
+.font-arabic {
+  font-family: 'Segoe UI', 'Noto Sans Arabic', 'Tahoma', 'Arial', sans-serif;
+  line-height: 1.7;
+}
+
+.font-english {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  line-height: 1.6;
+}
+
+/* ─── Focus ring ──────────────────────────── */
+*:focus-visible {
+  outline: 2px solid #6366f1;
+  outline-offset: 2px;
+}
+
+::selection {
+  background-color: rgba(99, 102, 241, 0.3);
+  color: inherit;
+}
