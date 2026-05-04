@@ -190,8 +190,9 @@
     "appearance": "Appearance",
     "data": "Data",
     "calmMode": "Calm Mode",
-    "calmModeDesc": "Reduce animations and colors for a quieter experience",
-    "developer": "Developer",
+    "calmModeDesc": "Reduce animations and colors for a quieter experience",    "categoriesLayout": "Categories Layout",
+    "horizontal": "Horizontal",
+    "vertical": "Vertical",    "developer": "Developer",
     "developerName": "Khaled Mohammed Al-Gharib",
     "developerAlias": "Saminsa",
     "developerAliasFull": "Known as Saminsa",
@@ -245,6 +246,9 @@
     "websiteUrl": "Website URL",
     "importBookmarks": "Import Bookmarks",
     "uploadImage": "Upload Image",
-    "category": "Category"
+    "category": "Category",
+    "urlLabel": "Website URL",
+    "urlPlaceholder": "https://example.com",
+    "icon": "Website Icon"
   }
 }

@@ -26,6 +26,17 @@ export default function Settings({
   const { t } = useI18n();
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
 
+  const [categoriesLayout, setCategoriesLayout] = useState<'horizontal' | 'vertical'>(() => {
+    return (localStorage.getItem('sampass_categories_layout') as 'horizontal' | 'vertical') || 'horizontal';
+  });
+
+  const handleSetCategoriesLayout = (layout: 'horizontal' | 'vertical') => {
+    setCategoriesLayout(layout);
+    localStorage.setItem('sampass_categories_layout', layout);
+    // Needs a reload or event to refresh Dashboard if we don't pass it up, but localstorage works on remount
+    window.dispatchEvent(new Event('sampass_layout_change'));
+  };
+
   const formatLastSync = () => {
     if (!lastSyncTime) return '—';
     const diff = Math.floor((Date.now() - lastSyncTime.getTime()) / 1000);
@@ -189,6 +200,38 @@ export default function Settings({
             >
               <div className={`absolute top-0.5 w-6 h-6 bg-white rounded-full shadow transition-all duration-300 ${calmMode ? 'start-[22px]' : 'start-0.5'}`} />
             </button>
+          </div>
+
+          {/* Categories Layout */}
+          <div className="px-5 py-4 flex items-center justify-between border-t border-slate-100 dark:border-slate-800">
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 bg-slate-100 dark:bg-slate-700/50 rounded-xl flex items-center justify-center">
+                <svg className="w-5 h-5 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6A2.25 2.25 0 016 3.75h2.25A2.25 2.25 0 0110.5 6v2.25a2.25 2.25 0 01-2.25 2.25H6a2.25 2.25 0 01-2.25-2.25V6zM3.75 15.75A2.25 2.25 0 016 13.5h2.25a2.25 2.25 0 012.25 2.25V18a2.25 2.25 0 01-2.25 2.25H6A2.25 2.25 0 013.75 18v-2.25zM13.5 6a2.25 2.25 0 012.25-2.25H18A2.25 2.25 0 0120.25 6v2.25A2.25 2.25 0 0118 10.5h-2.25a2.25 2.25 0 01-2.25-2.25V6zM13.5 15.75a2.25 2.25 0 012.25-2.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-2.25A2.25 2.25 0 0113.5 18v-2.25z" />
+                </svg>
+              </div>
+              <div>
+                <p className="text-sm font-medium text-slate-900 dark:text-white">{t('settings.categoriesLayout')}</p>
+              </div>
+            </div>
+            <div className="flex bg-slate-100 dark:bg-slate-800 rounded-xl p-1">
+              <button
+                onClick={() => handleSetCategoriesLayout('horizontal')}
+                className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-200 ${
+                  categoriesLayout === 'horizontal' ? 'bg-indigo-600 text-white shadow-sm' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
+                }`}
+              >
+                {t('settings.horizontal')}
+              </button>
+              <button
+                onClick={() => handleSetCategoriesLayout('vertical')}
+                className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-200 ${
+                  categoriesLayout === 'vertical' ? 'bg-indigo-600 text-white shadow-sm' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
+                }`}
+              >
+                {t('settings.vertical')}
+              </button>
+            </div>
           </div>
         </section>
 

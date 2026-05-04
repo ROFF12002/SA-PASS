@@ -362,26 +362,35 @@ export default function MySpaces() {
       </div>
 
         {showAddModal && (
-        <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-900/40 dark:bg-slate-950/60 backdrop-blur-sm animate-fadeIn custom-scrollbar">
-          <div className="min-h-full flex items-center justify-center p-4 py-8">
-            <div className="bg-white dark:bg-slate-900 w-full max-w-md rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 animate-slideUp relative">
-              <div className="p-5 sm:p-6">
-                <div className="flex justify-between items-center mb-6 border-b border-slate-100 dark:border-slate-800/50 pb-4">
-                  <h2 className="text-xl font-bold dark:text-white">
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 animate-fadeIn">
+            {/* Backdrop */}
+            <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setShowAddModal(false)} />
+            
+            {/* Modal */}
+            <div className="relative w-full max-w-lg bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 animate-slideUp max-h-[90vh] overflow-y-auto">
+              <div className="p-6">
+                {/* Header */}
+                <div className="flex items-center justify-between mb-6">
+                  <h2 className="text-xl font-bold text-slate-900 dark:text-white">
                     {editingLinkId ? t('mySpaces.editLink') : t('mySpaces.quickAdd')}
                   </h2>
-                  <div className="flex gap-2 items-center">
+                  <div className="flex items-center gap-2">
                     {editingLinkId && (
                       <button 
                         type="button"
                         onClick={() => handleDeleteLink(editingLinkId)} 
-                        className="text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 p-2 rounded-full"
+                        className="p-2 rounded-lg text-slate-400 hover:text-red-500 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10 transition-all"
                         title={t('mySpaces.deleteLink')}
                       >
-                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" /></svg>
+                        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
+                        </svg>
                       </button>
                     )}
-                    <button type="button" onClick={() => setShowAddModal(false)} className="text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 p-2 rounded-full">
+                    <button
+                      onClick={() => setShowAddModal(false)}
+                      className="p-2 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all"
+                    >
                       <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                         <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
                       </svg>
@@ -389,104 +398,96 @@ export default function MySpaces() {
                   </div>
                 </div>
 
-                <form onSubmit={handleSave} className="space-y-6">
-                  {/* Custom Image Upload & Name */}
-                  <div className="flex flex-row-reverse items-start gap-4">
-                    <div className="flex flex-col items-center gap-2 shrink-0">
-                      <label className="text-xs font-medium text-slate-500 dark:text-slate-400">{t('mySpaces.icon')}</label>
-                      <div className="w-14 h-14 rounded-2xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center justify-center overflow-hidden relative group transition-all hover:ring-2 hover:ring-indigo-500/50">
-                        {customIcon ? (
-                          <img src={customIcon} alt="Icon" className="w-9 h-9 object-contain" />
-                        ) : (linkUrl && linkUrl.length > 5) ? (
-                          <img src={`https://www.google.com/s2/favicons?domain=${new URL(linkUrl.startsWith('http') ? linkUrl : 'https://'+linkUrl).hostname}&sz=128`} alt="Favicon" className="w-9 h-9 object-contain" onError={(e) => e.currentTarget.style.display = 'none'} />
-                        ) : (
-                          <svg className="w-6 h-6 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" /></svg>
-                        )}
-                        
-                        <label className="absolute inset-0 bg-black/50 flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer backdrop-blur-[2px]">
-                          <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" /></svg>
-                          <input type="file" accept="image/*" className="hidden" ref={fileInputRef} onChange={handleImageUpload} />
-                        </label>
-                      </div>
-                    </div>
-                    
-                    <div className="flex-1 space-y-2 mt-1">
-                      <label className="text-sm font-medium text-slate-700 dark:text-slate-300 block">{t('mySpaces.nameLabel')}</label>
-                      <input 
-                        type="text" 
-                        value={linkName}
-                        onChange={(e) => setLinkName(e.target.value)}
-                        placeholder={t('mySpaces.namePlaceholder', 'مثلاً: ماسنجر')}
-                        className="w-full bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700/80 rounded-xl px-4 py-3 text-sm dark:text-white focus:ring-2 focus:ring-indigo-500/50 outline-none transition-all placeholder-slate-400"
-                        required
-                      />
-                    </div>
+                {/* Form */}
+                <form onSubmit={handleSave} className="space-y-4">
+                  {/* Link Url */}
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">{t('mySpaces.urlLabel', 'URL رابط الموقع')}</label>
+                    <input 
+                      type="url" 
+                      value={linkUrl}
+                      onChange={(e) => setLinkUrl(e.target.value)}
+                      placeholder={t('mySpaces.urlPlaceholder', 'https://example.com')}
+                      className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
+                      required
+                      dir="ltr"
+                    />
                   </div>
 
-                  {/* URL Input with Smart Paste */}
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium text-slate-700 dark:text-slate-300 block">{t('mySpaces.websiteUrl')}</label>
-                    <div className="flex flex-col sm:flex-row-reverse gap-3">
-                      <div className="relative flex-1">
-                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                          <svg className="w-4 h-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" /></svg>
-                        </div>
-                        <input 
-                          type="url" 
-                          value={linkUrl}
-                          onChange={(e) => setLinkUrl(e.target.value)}
-                          placeholder="https://example.com"
-                          className="w-full bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700/80 rounded-xl pl-10 pr-4 py-3 text-sm dark:text-white focus:ring-2 focus:ring-indigo-500/50 outline-none text-left transition-all placeholder-slate-400"
-                          dir="ltr"
-                          required
-                        />
-                      </div>
-                      <button 
-                        type="button" 
-                        onClick={handlePaste}
-                        className="shrink-0 px-5 py-3 sm:py-0 bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 rounded-xl hover:bg-indigo-100 dark:hover:bg-indigo-500/20 transition-colors font-medium text-sm flex items-center justify-center gap-2 border border-indigo-100 dark:border-indigo-500/20"
+                  {/* Name */}
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">{t('mySpaces.nameLabel')}</label>
+                    <input 
+                      type="text" 
+                      value={linkName}
+                      onChange={(e) => setLinkName(e.target.value)}
+                      placeholder={t('mySpaces.namePlaceholder', 'مثلاً: ماسنجر')}
+                      className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
+                      required
+                    />
+                  </div>
+
+                  {/* Folder Selection */}
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">{t('mySpaces.category', 'القسم')}</label>
+                    <div className="relative">
+                      <select
+                        value={linkFolderId}
+                        onChange={(e) => setLinkFolderId(e.target.value)}
+                        className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all appearance-none cursor-pointer"
                       >
-                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M15.666 3.888A2.25 2.25 0 0013.5 2.25h-3c-1.03 0-1.9.693-2.166 1.638m7.332 0c.055.194.084.4.084.612v0a.75.75 0 01-.75.75H9a.75.75 0 01-.75-.75v0c0-.212.03-.418.084-.612m7.332 0c.646.049 1.288.11 1.927.184 1.1.128 1.907 1.077 1.907 2.185V19.5a2.25 2.25 0 01-2.25 2.25H6.75A2.25 2.25 0 014.5 19.5V6.257c0-1.108.806-2.057 1.907-2.185a48.208 48.208 0 011.927-.184" /></svg>
-                        {t('mySpaces.pasteBtn')}
-                      </button>
+                        {folders.map(f => (
+                          <option key={f.id} value={f.id}>{f.icon} {f.name}</option>
+                        ))}
+                      </select>
+                      <div className="absolute inset-y-0 end-0 flex items-center pe-4 pointer-events-none">
+                        <svg className="w-5 h-5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                        </svg>
+                      </div>
                     </div>
                   </div>
 
-                  <div className="space-y-3 pt-4">
-                    <label className="text-sm font-medium text-slate-700 dark:text-slate-300 block text-center sm:text-start">{t('mySpaces.selectSpace')}</label>
-                    <div className="flex flex-wrap gap-2 justify-center sm:justify-start">
-                      {folders.map(f => (
-                        <button
-                          type="button"
-                          key={f.id}
-                          onClick={() => setLinkFolderId(f.id)}
-                          className={`px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all flex items-center gap-2 border ${
-                            linkFolderId === f.id 
-                              ? 'bg-indigo-600 border-indigo-600 text-white shadow-md shadow-indigo-500/20 scale-105' 
-                              : 'bg-slate-50 dark:bg-slate-800/50 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:border-indigo-300 dark:hover:border-indigo-500 hover:bg-white dark:hover:bg-slate-800 hover:scale-105'
-                          }`}
-                        >
-                          <span className="text-base leading-none drop-shadow-sm">{f.icon}</span> 
-                          <span className="max-w-[120px] truncate">{f.name}</span>
-                        </button>
-                      ))}
+                  {/* Icon Setup */}
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">{t('mySpaces.icon')}</label>
+                    <div className="w-16 h-16 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center justify-center overflow-hidden relative group transition-all hover:ring-2 hover:ring-indigo-500/50">
+                      {customIcon ? (
+                        <img src={customIcon} alt="Icon" className="w-8 h-8 object-contain" />
+                      ) : (linkUrl && linkUrl.length > 5) ? (
+                        <img src={`https://www.google.com/s2/favicons?domain=${new URL(linkUrl.startsWith('http') ? linkUrl : 'https://'+linkUrl).hostname}&sz=128`} alt="Favicon" className="w-8 h-8 object-contain" onError={(e) => e.currentTarget.style.display = 'none'} />
+                      ) : (
+                        <svg className="w-6 h-6 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" /></svg>
+                      )}
+                      <label className="absolute inset-0 bg-black/50 flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer backdrop-blur-[2px]">
+                        <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" /></svg>
+                        <input type="file" accept="image/*" className="hidden" ref={fileInputRef} onChange={handleImageUpload} />
+                      </label>
                     </div>
                   </div>
 
-                  <div className="flex gap-3 pt-6 border-t border-slate-100 dark:border-slate-800/80 mt-4">
-                    <button type="submit" className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white py-3.5 rounded-xl font-semibold shadow-lg shadow-indigo-500/20 transition-all active:scale-[0.98]">
-                      {t('mySpaces.saveWebApp')}
-                    </button>
-                    <button type="button" onClick={() => setShowAddModal(false)} className="flex-1 bg-slate-100 dark:bg-slate-800 border-transparent hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 py-3.5 rounded-xl font-semibold transition-all">
+                  {/* Actions */}
+                  <div className="flex gap-3 pt-2">
+                    <button
+                      type="button"
+                      onClick={() => setShowAddModal(false)}
+                      className="flex-1 py-3 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-medium rounded-xl hover:bg-slate-200 dark:hover:bg-slate-700 transition-all"
+                    >
                       {t('general.cancel')}
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={!linkUrl.trim() || !linkName.trim()}
+                      className="flex-1 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-semibold rounded-xl shadow-lg shadow-indigo-500/25 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 active:scale-[0.98]"
+                    >
+                      {editingLinkId ? t('mySpaces.saveWebApp') : t('mySpaces.quickAdd')}
                     </button>
                   </div>
                 </form>
+              </div>
             </div>
           </div>
-        </div>
-        </div>
-      )}
+        )}
     </div>
   );
 }

@@ -191,6 +191,9 @@
     "data": "البيانات",
     "calmMode": "وضع الهدوء",
     "calmModeDesc": "تقليل الحركات والألوان لتجربة أكثر هدوءاً",
+    "categoriesLayout": "طريقة عرض الأقسام",
+    "horizontal": "أفقي",
+    "vertical": "عمودي",
     "developer": "المطور",
     "developerName": "خالد محمد الغريب",
     "developerAlias": "سامينسا",
@@ -247,6 +250,9 @@
     "websiteUrl": "رابط الموقع",
     "importBookmarks": "استيراد المفضلة",
     "uploadImage": "رفع صورة للموقع",
-    "category": "القسم"
+    "category": "القسم",
+    "urlLabel": "رابط الموقع",
+    "urlPlaceholder": "https://example.com",
+    "icon": "أيقونة الموقع"
   }
 }

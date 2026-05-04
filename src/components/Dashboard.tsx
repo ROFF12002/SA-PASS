@@ -78,6 +78,17 @@ export default function Dashboard({ user, encryptionKey, isOnline, onOpenSetting
   const [quickAddPlatform, setQuickAddPlatform] = useState<{ name: string; url: string; category: string } | null>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [copiedUsernameId, setCopiedUsernameId] = useState<string | null>(null);
+  const [categoriesLayout, setCategoriesLayout] = useState<'horizontal' | 'vertical'>(() => {
+    return (localStorage.getItem('sampass_categories_layout') as 'horizontal' | 'vertical') || 'horizontal';
+  });
+
+  useEffect(() => {
+    const handleLayoutChange = () => {
+      setCategoriesLayout((localStorage.getItem('sampass_categories_layout') as 'horizontal' | 'vertical') || 'horizontal');
+    };
+    window.addEventListener('sampass_layout_change', handleLayoutChange);
+    return () => window.removeEventListener('sampass_layout_change', handleLayoutChange);
+  }, []);
 
   // Open add modal when triggered from onboarding
   useEffect(() => {
@@ -492,20 +503,62 @@ export default function Dashboard({ user, encryptionKey, isOnline, onOpenSetting
 
   // ─── Render ────────────────────────────────
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 transition-colors duration-300">
-      {/* Header — Entry stagger 1 */}
-      <header className="sticky top-0 z-40 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border-b border-slate-200 dark:border-slate-800 animate-fadeIn stagger-1">
-        <div className="max-w-6xl mx-auto px-4 py-3">
-          <div className="flex items-center gap-3">
-            {/* Logo */}
-            <div className="flex items-center gap-2.5 shrink-0">
-              <div className="w-10 h-10 flex items-center justify-center">
-                <img src="/icon.png" alt="Logo" className="w-full h-full object-contain" />
-              </div>
-              <h1 className="text-lg font-bold text-slate-900 dark:text-white hidden sm:block">
-                {t('app.shortName')}
-              </h1>
+    <div className={`min-h-screen bg-slate-50 dark:bg-slate-950 transition-colors duration-300 ${categoriesLayout === 'vertical' ? 'flex items-start' : 'flex flex-col'}`}>
+      
+      {/* --- SIDEBAR for Vertical Layout --- */}
+      {categoriesLayout === 'vertical' && (
+        <aside className="w-64 shrink-0 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border-e border-slate-200 dark:border-slate-800 h-screen sticky top-0 flex flex-col p-4 z-50 animate-fadeIn">
+          <div className="flex items-center gap-2.5 shrink-0 mb-8 px-2">
+            <div className="w-10 h-10 flex items-center justify-center">
+              <img src="/icon.png" alt="Logo" className="w-full h-full object-contain" />
             </div>
+            <h1 className="text-lg font-bold text-slate-900 dark:text-white">
+              {t('app.shortName')}
+            </h1>
+          </div>
+
+          <div className="flex flex-col gap-2">
+            <button
+              onClick={() => setActiveMainTab('vault')}
+              className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all ${
+                activeMainTab === 'vault'
+                  ? 'bg-indigo-600 text-white shadow-md'
+                  : 'text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800'
+              }`}
+            >
+              {t('dashboard.tabVault')}
+            </button>
+            <button
+              onClick={() => setActiveMainTab('spaces')}
+              className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all ${
+                activeMainTab === 'spaces'
+                  ? 'bg-indigo-600 text-white shadow-md'
+                  : 'text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800'
+              }`}
+            >
+              {t('dashboard.tabLaunchpad')}
+            </button>
+          </div>
+        </aside>
+      )}
+
+      {/* --- MAIN CONTENT WRAPPER --- */}
+      <div className="flex-1 flex flex-col min-w-0">
+        {/* Header — Entry stagger 1 */}
+        <header className="sticky top-0 z-40 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border-b border-slate-200 dark:border-slate-800 animate-fadeIn stagger-1">
+          <div className="max-w-6xl w-full mx-auto px-4 py-3">
+            <div className="flex items-center gap-3">
+              {/* Logo (Only show if horizontal) */}
+              {categoriesLayout !== 'vertical' && (
+                <div className="flex items-center gap-2.5 shrink-0">
+                  <div className="w-10 h-10 flex items-center justify-center">
+                    <img src="/icon.png" alt="Logo" className="w-full h-full object-contain" />
+                  </div>
+                  <h1 className="text-lg font-bold text-slate-900 dark:text-white hidden sm:block">
+                    {t('app.shortName')}
+                  </h1>
+                </div>
+              )}
 
             {/* Search */}
             <div className="flex-1 max-w-xl relative">
@@ -545,40 +598,42 @@ export default function Dashboard({ user, encryptionKey, isOnline, onOpenSetting
           </div>
         </div>
 
-        {/* --- MAIN TABS (Vault vs Spaces) --- */}
-        <div className="max-w-6xl mx-auto px-4 pb-0">
-          <div className="flex items-center gap-6 border-b border-slate-200 dark:border-slate-800">
-            <button
-              onClick={() => setActiveMainTab('vault')}
-              className={`pb-3 text-sm font-medium transition-all relative ${
-                activeMainTab === 'vault'
-                  ? 'text-indigo-600 dark:text-indigo-400'
-                  : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-300'
-              }`}
-            >
-              {t('dashboard.tabVault')}
-              {activeMainTab === 'vault' && (
-                <div className="absolute bottom-0 left-0 w-full h-[2px] bg-indigo-600 dark:bg-indigo-400 rounded-t-full" />
-              )}
-            </button>
-            <button
-              onClick={() => setActiveMainTab('spaces')}
-              className={`pb-3 text-sm font-medium transition-all relative ${
-                activeMainTab === 'spaces'
-                  ? 'text-indigo-600 dark:text-indigo-400'
-                  : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-300'
-              }`}
-            >
-              {t('dashboard.tabLaunchpad')}
-              {activeMainTab === 'spaces' && (
-                <div className="absolute bottom-0 left-0 w-full h-[2px] bg-indigo-600 dark:bg-indigo-400 rounded-t-full" />
-              )}
-            </button>
+        {/* --- MAIN TABS (Vault vs Spaces) - Horizontal Only --- */}
+        {categoriesLayout !== 'vertical' && (
+          <div className="max-w-6xl w-full mx-auto px-4 pb-0">
+            <div className="flex items-center gap-6 border-b border-slate-200 dark:border-slate-800">
+              <button
+                onClick={() => setActiveMainTab('vault')}
+                className={`pb-3 text-sm font-medium transition-all relative ${
+                  activeMainTab === 'vault'
+                    ? 'text-indigo-600 dark:text-indigo-400'
+                    : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-300'
+                }`}
+              >
+                {t('dashboard.tabVault')}
+                {activeMainTab === 'vault' && (
+                  <div className="absolute bottom-0 left-0 w-full h-[2px] bg-indigo-600 dark:bg-indigo-400 rounded-t-full" />
+                )}
+              </button>
+              <button
+                onClick={() => setActiveMainTab('spaces')}
+                className={`pb-3 text-sm font-medium transition-all relative ${
+                  activeMainTab === 'spaces'
+                    ? 'text-indigo-600 dark:text-indigo-400'
+                    : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-300'
+                }`}
+              >
+                {t('dashboard.tabLaunchpad')}
+                {activeMainTab === 'spaces' && (
+                  <div className="absolute bottom-0 left-0 w-full h-[2px] bg-indigo-600 dark:bg-indigo-400 rounded-t-full" />
+                )}
+              </button>
+            </div>
           </div>
-        </div>
+        )}
       </header>
 
-      <main className="max-w-6xl mx-auto px-4 py-6">
+      <main className="max-w-6xl w-full mx-auto px-4 py-6">
 
         {activeMainTab === 'spaces' ? (
           <MySpaces />
@@ -886,6 +941,8 @@ export default function Dashboard({ user, encryptionKey, isOnline, onOpenSetting
           {t('settings.copyright')}
         </p>
       </footer>
+      
+      </div> {/* Close main wrapper for responsive sidebar */}
     </div>
   );
 }
